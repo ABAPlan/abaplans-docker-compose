@@ -1,0 +1,22 @@
+version: "0"
+services:
+  reverse-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/chappatte/demo-certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+  frontend-demo:
+    environment:
+      - VIRTUAL_HOST=demo.audiotactile.ovh
+      - VIRTUAL_PORT=443
+      - VIRTUAL_PROTO=https
+    image: abaplans-frontend-demo
+  frontend-prod:
+    environment:
+      - VIRTUAL_HOST=app.audiotactile.ovh
+      - VIRTUAL_PORT=443
+      - VIRTUAL_PROTO=https
+    image: abaplans-frontend-prod
