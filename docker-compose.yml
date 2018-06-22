@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+  database:
+    build:
+      context: ./images/database
+      args:
+        DEFAULT_DATABASE_REPOSITORY: https://github.com/ABAPlan/database-schema.git
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - "${DB_FOLDER}:/var/lib/mysql"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.8.1
+    environment:
+      VIRTUAL_HOST: phpmyadmin.${BASE_URL}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      PMA_HOST: database
+    depends_on:
+      - database
+  
+  backend:
+    build:
+      context: ./images/backend
+      args:
+        REMOTE_REPOSITORY: https://github.com/ABAPlan/backend.git
+    environment:
+      VIRTUAL_HOST: backend.${BASE_URL}
+      DB_HOSTNAME: database
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASS}
+    depends_on:
+      - database
+  
+  frontend-editor:
+    build:
+      context: ./images/frontend-editor
+      args:
+        REMOTE_REPOSITORY: https://github.com/ABAPlan/frontend-editor.git
+        BACKEND_URL: backend.${BASE_URL}
+    environment:
+      VIRTUAL_HOST: editor.${BASE_URL}
+    depends_on:
+      - backend
+  
+  frontend-reader:
+    build:
+      context: ./images/frontend-reader
+      args:
+        REMOTE_REPOSITORY: https://github.com/ABAPlan/frontend-reader.git
+        BACKEND_URL: backend.${BASE_URL}
+    environment:
+      VIRTUAL_HOST: reader.${BASE_URL}
+    depends_on:
+      - backend
+  
+  reverse-proxy:
+    build: ./images/reverse-proxy
+    depends_on:
+      - backend
+      - frontend-editor
+      - frontend-reader
